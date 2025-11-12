@@ -1,40 +1,64 @@
-from google.adk.agents import Agent
-from tools import hotel_tools
 from dotenv import load_dotenv
 import os
+from typing import Optional, Literal
+from pydantic import BaseModel, Field
+from google.adk.agents import LlmAgent
+from models.models_hotels import HotelSearchResultOut
+from tools import hotel_tools
 
 load_dotenv()
 
-root_agent = Agent(
-    name="hotel_information_agent",
+class HotelAgentInput(BaseModel):
+    final_destination_address: str = Field(description="Address/POI, e.g., 'Microsoft Parque das Nações, Lisboa'.")
+    country_code: Optional[str] = Field(default=None, description="ISO-3166-1 alpha-2, e.g., 'PT'.")
+    locality: Optional[str] = Field(default=None, description="City/locality, e.g., 'Lisboa'.")
+    checkin_date: str = Field(description="YYYY-MM-DD")
+    checkout_date: str = Field(description="YYYY-MM-DD")
+    include_breakfast: bool = Field(default=True)
+    free_cancellation: bool = Field(default=True)
+    transport_mode: Literal["walk", "drive"] = Field(default="walk")
+    top_k: int = Field(default=5, ge=1, le=20)
+
+root_agent = LlmAgent(
     model=os.getenv("GEMINI_MODEL_VERSION", "gemini-2.5-pro"),
-    description="An agent to provide hotel information.",
-    instruction="""
-        You are an expert travel agent specializing in providing hotel information.
-        You provide accurate and concise details on the top 5 options, ranked by distance to final location and price, in a tabular format.
-        From the destination provided, induce as much information as possible about the final location (e.g., if the user says he wants to visit Lisbon, and he is going to the Microsoft office, find where the Microsoft office is located in Lisbon and provide hotels near that location).
-        If no specific information is provided, assume the user wants hotels near the final destination (usually the client).
-        If no specific information is provided, assume a 3-star hotel with breakfast included.
-        """,
+    name="hotel_information_agent",
+    description="Finds hotels near a final destination and returns normalized results with travel time/distance.",
+    instruction=f"""
+Return ONLY a single JSON object that matches this JSON Schema:
+{HotelSearchResultOut.model_json_schema()}
+
+You are provided a structured input (HotelAgentInput). Steps:
+1) Geocode 'final_destination_address' (use country_code/locality if present).
+2) Search hotels with the dates and filters.
+3) Enrich with distance & travel time (transport_mode).
+4) Rank by travel time (asc), then total price (asc).
+5) Return exactly the HotelSearchResultOut JSON. If a tool errors, return: {{"error": "<message>"}}.
+""",
+    input_schema=HotelAgentInput,
+    output_schema=HotelSearchResultOut,
+    output_key="hotels_result",
     tools=hotel_tools,
 )
 
 if __name__ == "__main__":
-    from vertexai.agent_engines import AdkApp
-
-    app = AdkApp(agent=root_agent)
-
-    async def run_agent():
-        async for event in app.async_stream_query(
-            message="I am in Porto and I want to go to Lisbon on 09/11/2026, and return on 11/11/2026. I will go to visit the Microsoft office. Provide me the travel information.",
-            user_id="user123",
-        ):
-            # breakpoint()
-            try:
-                print(event["content"]["parts"][0]["text"], end="\n\n\n")
-            except Exception as e:
-                print(f"Error processing event: {e}")
-
     import asyncio
+    from google.genai import types
+    import json
+    from utils.run import run_agent
 
-    asyncio.run(run_agent())
+    app_name = "hotel_app"
+
+    TEST_INPUT = {
+        "final_destination_address": "Microsoft Portugal, Parque das Nações, Lisboa",
+        "country_code": "PT",
+        "locality": "Lisboa",
+        "checkin_date": "2025-12-09",
+        "checkout_date": "2025-12-11",
+        "include_breakfast": False,
+        "free_cancellation": False,
+        "transport_mode": "walk",
+        "top_k": 20
+    }
+
+    user_content = types.Content(role="user", parts=[types.Part(text=json.dumps(TEST_INPUT))])
+    asyncio.run(run_agent(app_name, root_agent, user_content))

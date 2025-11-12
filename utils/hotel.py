@@ -9,7 +9,8 @@ RAPID_API_KEY = os.getenv("RAPID_API_KEY")
 
 
 def get_coordinates_from_address(address: str, country: str, locality: str) -> dict:
-    """Fetches the coordinates (latitude and longitude) for a given address using the Google Maps API.
+    """
+    Fetches the coordinates (latitude and longitude) for a given address using the Google Maps API.
 
     Args:
         address (str): The address to geocode (e.g., "Deloitte Bom Sucesso").
@@ -18,28 +19,28 @@ def get_coordinates_from_address(address: str, country: str, locality: str) -> d
 
     Returns:
         dict: A dictionary containing 'location' and 'viewport' keys on success,
-              or an 'error' key with a message on failure.
+            or an 'error' key with a message on failure.
         Success example:
-        {
-            "location": {
-                "latitude": 41.14961,
-                "longitude": -8.61099
-            },
-            "viewport": {
-                "northeast": {
+            {
+                "location": {
                     "latitude": 41.14961,
                     "longitude": -8.61099
                 },
-                "southwest": {
-                    "latitude": 41.14961,
-                    "longitude": -8.61099
+                "viewport": {
+                    "northeast": {
+                        "latitude": 41.14961,
+                        "longitude": -8.61099
+                    },
+                    "southwest": {
+                        "latitude": 41.14961,
+                        "longitude": -8.61099
+                    }
                 }
             }
-        }
         Failure example:
-        {
-            "error": "Failed to retrieve coordinates. Status code: 400"
-        }
+            {
+                "error": "Failed to retrieve coordinates. Status code: 400"
+            }
     """
     url = "https://maps.googleapis.com/maps/api/geocode/json"
     components = []
@@ -76,7 +77,8 @@ def search_hotels(
     checkout_date: str,
     filters: str,
 ) -> dict:
-    """Searches for hotels in a specific location (latitude/longitude) for given dates and number of guests.
+    """
+    Searches for hotels in a specific location (latitude/longitude) for given dates and number of guests.
 
     Uses the Booking.com Hotels API via RapidAPI.
 
@@ -90,50 +92,50 @@ def search_hotels(
 
     Returns:
         dict:
-        - On success: the JSON response from the API containing hotel search results.
-        - On failure: a dictionary with an error message.
+            - On success: the JSON response from the API containing hotel search results.
+            - On failure: a dictionary with an error message.
 
         Success example:
-        {
-            "data": {
-                "results": [
-                    {
-                        "checkinCheckoutPolicy": {
-                            "checkinTimeFromInHours": 15,
-                            "checkinTimeUntilInHours": 0,
-                            "checkoutTimeUntilInHours": 11,
-                            "checkoutTimeFromInHours": 0
-                        },
-                        "basicPropertyData": {
-                            "name": "Hotel Example"
-                            "latitude": 41.14961,
-                            "longitude": -8.61099,
-                            "address": "123 Example St, Porto, Portugal",
-                            "starRating": {
-                                "value": 4,
-                                "symbol": "STARS"
-                            }
-                            "reviews": {
-                                "reviewsCount": 5728,
-                                "totalScore": 7.3
-                            }
-                        },
-                        "blocks": [
-                            {
-                                "finalPrice": {
-                                    "amount": 150,
-                                    "currency": "USD"
+            {
+                "data": {
+                    "results": [
+                        {
+                            "checkinCheckoutPolicy": {
+                                "checkinTimeFromInHours": 15,
+                                "checkinTimeUntilInHours": 0,
+                                "checkoutTimeUntilInHours": 11,
+                                "checkoutTimeFromInHours": 0
+                            },
+                            "basicPropertyData": {
+                                "name": "Hotel Example",
+                                "latitude": 41.14961,
+                                "longitude": -8.61099,
+                                "address": "123 Example St, Porto, Portugal",
+                                "starRating": {
+                                    "value": 4,
+                                    "symbol": "STARS"
+                                },
+                                "reviews": {
+                                    "reviewsCount": 5728,
+                                    "totalScore": 7.3
                                 }
-                            }
-                        ]
-                    }
-                ]
+                            },
+                            "blocks": [
+                                {
+                                    "finalPrice": {
+                                        "amount": 150,
+                                        "currency": "USD"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
             }
-        }
         Failure example:
-        {
-            "error": "Failed to retrieve hotel data. Status code: 400"
-        }
+            {
+                "error": "Failed to retrieve hotel data. Status code: 400"
+            }
     """
     # TODO: API has pagination, so we are only getting the first page of results
     # TODO: Additional parameters for more refined search (e.g., number of guests, min/max price)
@@ -215,55 +217,31 @@ def search_hotels(
 def calculate_road_distance_between_coordinates(
     source_coords: list[float], target_coords: list[list[float]]
 ) -> dict:
-    """Calculates the road distance and duration between two sets of coordinates using the Google Maps Distance Matrix API.
-
-    Args:
-        source_coords (list[float]): A list containing the latitude and longitude of the origin location [lat, lon].
-        target_coords (list[list[float]]): A list of lists, each containing the latitude and longitude of a destination location [lat, lon].
-
-    Returns:
-        dict: A dictionary containing distance and duration information on success,
-              or an 'error' key with a message on failure.
-        Success example:
-        {
-            "data": [
-                {
-                    "distance": 26732,
-                    "time": 1800,
-                    "source_index": 0,
-                    "destination_index": 0
-                }
-            ],
-            "distance_units": "meters"
-        }
-        Failure example:
-        {
-            "error": "Failed to retrieve distance data. Status code: 400"
-        }
     """
+    Calculates distance/time using Geoapify Route Matrix. No cache.
+    Returns {'data': [...], 'distance_units': 'meters'} or {'error': ...}
+    """
+    if not target_coords:
+        return {"data": [], "distance_units": "meters"}
     url = "https://api.geoapify.com/v1/routematrix"
     headers = {"Content-Type": "application/json"}
     params = {"apiKey": GEOAPIFY_API_KEY}
     data = {
-        "mode": "drive",  # TODO: add more options (?)
+        "mode": "walk",
         "sources": [{"location": source_coords}],
         "targets": [{"location": coord} for coord in target_coords],
     }
-    response = requests.post(url, headers=headers, params=params, json=data)
-
-    if not response.status_code == 200:
-        return {
-            "error": f"Failed to retrieve distance data. Status code: {response.status_code}"
-        }
-
+    resp = requests.post(url, headers=headers, params=params, json=data, timeout=30)
+    if resp.status_code != 200:
+        return {"error": f"Failed to retrieve distance data. Status code: {resp.status_code}"}
     try:
-        response_json = response.json()
+        j = resp.json()
         return {
-            "data": response_json.get("sources_to_targets")[0],
-            "distance_units": response_json.get("distance_units"),
+            "data": (j.get("sources_to_targets") or [])[0],
+            "distance_units": j.get("distance_units") or "meters",
         }
-    except (IndexError, KeyError, TypeError) as e:
-        return {"error": f"Error parsing address from response: {str(e)}"}
+    except Exception as e:
+        return {"error": f"Error parsing distance response: {e}"}
 
 
 def enrich_hotels_with_distance(
