@@ -288,18 +288,19 @@ def enrich_hotels_with_distance(
     distances = distance_data.get("data", [])
     units = distance_data.get("distance_units", "meters")
 
+    HOTEL_CHECKIN_CHECKOUT_POLICY_ATTRIBUTES = [
+        "checkinTimeFromInHours",
+        "checkoutTimeFromInHours",
+        "checkinTimeUntilInHours",
+        "checkoutTimeUntilInHours",
+    ]
+    BASIC_PROPERTY_DATA_ATTRIBUTES = ["name", "starRating", "location", "reviews"]
+    BASIC_PROPERTY_DATA_LOCATION_ATTRIBUTES = ["latitude", "longitude", "address"]
+    BASIC_PROPERTY_DATA_REVIEWS_ATTRIBUTES = ["reviewsCount", "totalScore"]
+
     # 3️⃣ Merge distances back into hotel records
     enriched_hotels = []
     for i, hotel in enumerate(results):
-        HOTEL_CHECKIN_CHECKOUT_POLICY_ATTRIBUTES = [
-            "checkinTimeFromInHours",
-            "checkoutTimeFromInHours",
-            "checkinTimeUntilInHours",
-            "checkoutTimeUntilInHours",
-        ]
-        BASIC_PROPERTY_DATA_ATTRIBUTES = ["name", "starRating", "location", "reviews"]
-        BASIC_PROPERTY_DATA_LOCATION_ATTRIBUTES = ["latitude", "longitude", "address"]
-        BASIC_PROPERTY_DATA_REVIEWS_ATTRIBUTES = ["reviewsCount", "totalScore"]
 
         checkin_checkout_policy = {
             key: hotel.get("checkinCheckoutPolicy", {}).get(key)
