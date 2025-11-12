@@ -52,6 +52,7 @@ In user query, specifying "tomorrow" or similar will not return the correct date
 -   Repository: https://github.com/Deloitte-Portugal/jetbeats-ai
 -   Vertex AI Docs: https://docs.cloud.google.com/python/docs/reference/vertexai/latest
 -   Vertex AI Pricing: https://cloud.google.com/vertex-ai/generative-ai/pricing#gemini-models-2.0
+-   Google ADK Agent Types: https://google.github.io/adk-docs/agents/
 -   Google ADK Multi-Agent Documentation: https://google.github.io/adk-docs/agents/multi-agents/
 -   Similar project: https://github.com/a2aproject/a2a-samples/tree/main/samples/python/agents/travel_planner_agent
 -   FAST API (flights and hotels): https://rapidapi.com/ntd119/api/booking-com18
