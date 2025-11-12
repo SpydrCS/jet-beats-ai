@@ -1,54 +1,105 @@
-from google.adk.agents import Agent
-from tools import context_tools
+from prompts.input.context_agent import INPUT_PROMPT_1
 from dotenv import load_dotenv
 import os
+from typing import Optional, List
+from pydantic import BaseModel, Field
+from enum import Enum
+from google.adk.agents import LlmAgent
 
 load_dotenv()
 
-root_agent = Agent(
-    name="context_extraction_agent",
+
+class TravelPromptInput(BaseModel):
+    prompt: str = Field(description="Raw user travel request in natural language.")
+
+
+class TripTypeEnum(str, Enum):
+    one_way = "one-way"
+    round_trip = "round-trip"
+
+
+# TODO: add flight time preference (e.g., morning/evening)
+# TODO: add transportation type (e.g., public, walking, taxi, etc.)
+# TODO: add loyalty program preferences (e.g., preferred airlines, hotel chains)
+class StructuredTravelContext(BaseModel):
+    origin_airport: str = Field(
+        description="Origin airport(s) IATA code.",
+    )
+    destination_airport: str = Field(
+        description="Destination airport(s) IATA code.",
+    )
+    departure_date: str = Field(
+        description="Departure date(S) in YYYY-MM-DD, separated by commas if multiple.",
+    )
+    return_date: Optional[str] = Field(
+        description="Return date(s) in YYYY-MM-DD, separated by commas if multiple, or null for one-way.",
+    )
+    trip_type: TripTypeEnum = Field(
+        description="'one-way' or 'round-trip'.",
+    )
+    final_destination: str = Field(
+        description="Specific final destination (address / POI) if inferable, otherwise null.",
+    )
+    hotel_rating_preference: Optional[str] = Field(
+        description="Hotel star rating preference if inferred.",
+    )
+    hotel_extras_preference: Optional[List[str]] = Field(
+        description="List of desired hotel extras (e.g., breakfast included).",
+    )
+
+
+# Exposed agent (name kept as root_agent for consistency with other modules)
+root_agent = LlmAgent(
     model=os.getenv("GEMINI_MODEL_VERSION", "gemini-2.5-pro"),
-    description="An agent to extract trip information from user prompts.",
-    instruction=""",
-        You are a travel context extractor. 
-        From a user prompt, extract structured information in the form of JSON.
+    name="context_extraction_agent",
+    description="Produces structured travel context JSON directly matching the output schema.",
+    instruction=f"""
+        You receive a JSON object like {{"prompt": "<user natural language travel request>"}}.
+        Infer as much structured information as possible.
+        Respond ONLY with a JSON matching this schema precisely:
+        {StructuredTravelContext.model_json_schema()}
+        If a destination has multiple airports, list all IATA codes separated by commas.
+        If a field cannot be confidently inferred, set it to null.
+        Use 'round-trip' or 'one-way' for trip_type.
+        Do not invent impossible data. Keep dates in YYYY-MM-DD.
 
-        Formatting rules:
-        - Origin and destination airports should be in IATA code format.
-        - Departure and return dates should be in YYYY-MM-DD format.
-
-        Output only valid JSON with these keys:
-        - origin_airport (or multiple, if origin city has multiple airports)
-        - destination_airport (or multiple, if destination city has multiple airports)
-        - departure_date
-        - return_date (if round-trip)
-        - trip_type ("one-way" or "round-trip")
-        - final_destination (as specific as possible, e.g., exact address)
-        - hotel_rating_preference (if available, e.g., "5-star")
-        - hotel_extras_preference (if available, e.g., "breakfast included", "free cancellation")
-
-        If missing info, infer sensibly or leave as null.""",
-    tools=context_tools,
+        Example Query: "{INPUT_PROMPT_1}"
+        Example Response: {{
+            'origin_airport': 'LIS', 
+            'destination_airport': 'CDG,ORY,BVA', 
+            'departure_date': '2024-11-20,2024-11-21,2024-11-22', 
+            'return_date': '2024-11-24,2024-11-25,2024-11-26', 
+            'trip_type': <TripTypeEnum.round_trip: 'round-trip'>, 
+            'final_destination': 'Paris office', 
+            'hotel_rating_preference': 'mid-range', 
+            'hotel_extras_preference': ['good Wi-Fi', 'breakfast included']
+        }}
+    """,
+    input_schema=TravelPromptInput,
+    output_schema=StructuredTravelContext,
+    output_key="structured_context_result",
 )
 
+
 if __name__ == "__main__":
-    from vertexai.agent_engines import AdkApp
-    from vertexai import init
+    """Inline demo that actually RUNS the structured agent and prints JSON output.
 
-    init(project="us-con-gcp-sbx-0001193-100925", location="europe-west1")
-
-    app = AdkApp(agent=root_agent)
-
-    async def run_agent():
-        async for event in app.async_stream_query(
-            message="I am in Porto and I want to go to London, to visit the London Eye, on 2026-10-10, and return on 2026-10-16. What are my options?.",
-            user_id="user123",
-        ):
-            try:
-                print(event["content"]["parts"][0]["text"], end="\n\n\n")
-            except Exception as e:
-                print(f"Error processing event: {e}")
+    Running: `python -m agents.context_agent` will now execute a single prompt
+    through a `Runner` with an in-memory session and print both the raw final
+    response and the parsed JSON stored under `structured_context_result`.
+    """
 
     import asyncio
+    from google.genai import types
+    import json
+    from utils.run import run_agent
 
-    asyncio.run(run_agent())
+    app_name = "travel_context_app"
+    TEST_INPUT = {"prompt": INPUT_PROMPT_1}
+
+    user_content = types.Content(
+        role="user", parts=[types.Part(text=json.dumps(TEST_INPUT))]
+    )
+
+    asyncio.run(run_agent(app_name, root_agent, user_content))
+    name = ("travel_context_tool_agent",)
