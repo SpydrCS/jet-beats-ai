@@ -12,6 +12,19 @@ In user query, specifying "tomorrow" or similar will not return the correct date
 -   Google Maps API: Same €5 added, first 10.000 requests free
 -   RAPID API: Free, limited at 530 requests/month.
 
+## Possible Agent Structure
+
+-   sequential
+    -   context extractor agent
+    -   parallel agent
+        -   flight agent
+        -   sequential agent
+            -   hotel agent (de acordo com preferencia - estrelas, pequeno almoço, etc.)
+            -   transport agent
+                -   (possible) public transport agent
+                -   (possible) car agent
+    -   itinerary builder agent
+
 ## Agents
 
 -   Orchestrator/Planner/Main Agent (TODO)
