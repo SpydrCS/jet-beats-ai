@@ -138,16 +138,61 @@ def search_hotels(
     # TODO: API has pagination, so we are only getting the first page of results
     # TODO: Additional parameters for more refined search (e.g., number of guests, min/max price)
     # TODO: Return more information (e.g., checkin/out times)
+    import json
+    import os
+    # Prepare cache filename using input parameters
+    import re
+
+    def sanitize(val):
+        r"""
+        Cleans a string for safe use in filenames (Windows compatible).
+        - Replaces spaces with underscores
+        - Removes invalid filename characters (: / \ ? * < > | ")
+        Returns '_' if input is None or empty after cleaning.
+        """
+        if val is None:
+            return "_"
+        val = str(val)
+        val = val.replace(" ", "_")
+        val = re.sub(r'[:/\\?*<>|\"]', '', val)
+        return val or "_"
+
+    def short(val):
+        """
+        Converts a string/float to its integer part as a string.
+        Used to shorten latitude/longitude for cache filenames.
+        Falls back to sanitize if conversion fails.
+        """
+        try:
+            return str(int(float(val)))
+        except Exception:
+            return sanitize(val)
+
+    ne = location.get("viewport", {}).get("northeast", {})
+    sw = location.get("viewport", {}).get("southwest", {})
+    cache_filename = (
+        f"responses/hotels_"
+        f"lat-{short(ne.get('lat'))}_lng-{short(ne.get('lng'))}_"
+        f"lat-{short(sw.get('lat'))}_lng-{short(sw.get('lng'))}_"
+        f"{sanitize(checkin_date)}_{sanitize(checkout_date)}_"
+        f"{sanitize(filters) if filters else 'nofilters'}.json"
+    )
+    if os.path.exists(cache_filename):
+        with open(cache_filename, "r", encoding="utf-8") as f:
+            print("Loading cached hotel search data from file.")
+            return json.load(f)
+    print("Cached hotel search data not found. Making API request...")
+
     url = "https://booking-com18.p.rapidapi.com/stays/search-by-geo"
     headers = {
         "x-rapidapi-key": RAPID_API_KEY,
         "x-rapidapi-host": "booking-com18.p.rapidapi.com",
     }
     params = {
-        "neLat": location.get("viewport", {}).get("northeast").get("lat"),
-        "neLng": location.get("viewport", {}).get("northeast").get("lng"),
-        "swLat": location.get("viewport", {}).get("southwest").get("lat"),
-        "swLng": location.get("viewport", {}).get("southwest").get("lng"),
+        "neLat": ne.get("lat"),
+        "neLng": ne.get("lng"),
+        "swLat": sw.get("lat"),
+        "swLng": sw.get("lng"),
         "checkinDate": checkin_date,
         "checkoutDate": checkout_date,
     }
@@ -157,6 +202,9 @@ def search_hotels(
     response = requests.get(url, headers=headers, params=params)
 
     if response.status_code == 200:
+        os.makedirs("responses", exist_ok=True)
+        with open(cache_filename, "w", encoding="utf-8") as f:
+            json.dump(response.json(), f, indent=4)
         return response.json()
     else:
         return {
