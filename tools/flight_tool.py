@@ -1,3 +1,4 @@
+import json
 import requests
 from dotenv import load_dotenv
 import os
@@ -60,6 +61,13 @@ def search_oneway_flights(origin: str, destination: str, date: str) -> dict:
             "error": "Failed to retrieve one-way flight data. Status code: 400"
         }
     """
+    # check if file with api response already exists in responses/oneway_{origin}_{destination}_{date}.json
+    if os.path.exists(f"responses/oneway_{origin}_{destination}_{date}.json"):
+        with open(f"responses/oneway_{origin}_{destination}_{date}.json", "r") as f:
+            print("Loading cached one-way flight data from file.")
+            return json.load(f)
+
+    print("Cached one-way flight data not found. Making API request...")
     # TODO: API has pagination, so we are only getting the first page of results
     # TODO: Additional parameters for more refined search (e.g., number of passengers, cabin class)
     # TODO: Return more information (e.g., stops, luggage available)
@@ -75,10 +83,17 @@ def search_oneway_flights(origin: str, destination: str, date: str) -> dict:
     }
     response = requests.get(url, headers=headers, params=query_string)
     if response.status_code == 200:
+        os.makedirs("responses", exist_ok=True)
+        with open(f"responses/oneway_{origin}_{destination}_{date}.json", "w") as f:
+            json.dump(response.json(), f, indent=4)
         return response.json()
     else:
+        try:
+            print("Error response:", response.json())
+        except Exception:
+            print("Error response is not in JSON format.")
         return {
-            "error": f"Failed to retrieve one-way flight data. Status code: {response.status_code}"
+            "error": f"Failed to retrieve one-way flight data. Status code: {response.status_code}",
         }
 
 
@@ -182,12 +197,12 @@ def search_roundtrip_flights(
 
 if __name__ == "__main__":
     # # Example usage
-    # oneway_result = search_oneway_flights("OPO", "LIS", "2025-11-08")
-    # print("One-way flight search result:")
-    # print(oneway_result)
+    oneway_result = search_oneway_flights("OPO", "LIS", "2026-01-08")
+    print("One-way flight search result:")
+    print(oneway_result)
 
-    roundtrip_result = search_roundtrip_flights(
-        "OPO", "LIS", "2025-11-08", "2025-11-11"
-    )
-    print("Round-trip flight search result:")
-    print(roundtrip_result)
+    # roundtrip_result = search_roundtrip_flights(
+    #     "OPO", "LIS", "2025-11-08", "2025-11-11"
+    # )
+    # print("Round-trip flight search result:")
+    # print(roundtrip_result)
