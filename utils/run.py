@@ -6,6 +6,11 @@ from google.adk.agents import LlmAgent
 
 
 async def run_agent(app_name: str, root_agent: LlmAgent, user_content: types.Content):
+    """
+    Run the structured agent and prints JSON output.
+    Executes a single prompt through a `Runner` with an in-memory session and prints both the raw final
+    response and the parsed JSON stored under the agent's output_key.
+    """
     user_id = "demo_user"
     session_id = "inline_demo"
     session_service = InMemorySessionService()
