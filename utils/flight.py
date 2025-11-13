@@ -1,7 +1,8 @@
 import json
+from models.flight import FlightToolResponse
 
 
-def format_flight_response(data: dict) -> dict:
+def format_flight_response(data: dict) -> FlightToolResponse:
     """
     Formats the flight search API response into a more readable structure.
 
@@ -98,10 +99,10 @@ def format_flight_response(data: dict) -> dict:
                 }
             )
 
-        return {"status": "success", "data": formatted_flights}
+        return FlightToolResponse(status="success", data=formatted_flights)
     except Exception as e:
         print("Error formatting flight response:", e)
-        return {"status": "error", "message": str(e)}
+        return FlightToolResponse(status="error", message=str(e))
 
 
 if __name__ == "__main__":

@@ -3,12 +3,17 @@ import requests
 from dotenv import load_dotenv
 import os
 from utils.flight import format_flight_response
+from models.flight import FlightToolResponse
 
 load_dotenv()
 RAPID_API_KEY = os.getenv("RAPID_API_KEY")
 
+# TODO: add option for multiple airports, and multiple dates
 
-def search_oneway_flights(origin: str, destination: str, date: str) -> dict:
+
+def search_oneway_flights(
+    origin: str, destination: str, date: str
+) -> FlightToolResponse:
     """
     Searches for one-way flights from a specific origin to a destination on a given date.
     Uses the Booking.com Flights API via RapidAPI.
@@ -119,17 +124,18 @@ def search_oneway_flights(origin: str, destination: str, date: str) -> dict:
         return format_flight_response(response.json())
     else:
         try:
-            print("Error response:", response.json())
+            message = "Error response:", response.json()
         except Exception:
-            print("Error response is not in JSON format.")
-        return {
-            "error": f"Failed to retrieve one-way flight data. Status code: {response.status_code}",
-        }
+            message = "Error response is not in JSON format."
+        return FlightToolResponse(
+            status="error",
+            message=f"Failed to retrieve one-way flight data. Status code: {response.status_code}. {message}",
+        )
 
 
 def search_roundtrip_flights(
     origin: str, destination: str, depart_date: str, return_date: str
-) -> dict:
+) -> FlightToolResponse:
     """
     Searches for round-trip flights between two airports for specified departure and return dates.
     Uses the Booking.com Flights API via RapidAPI.
@@ -242,9 +248,14 @@ def search_roundtrip_flights(
             json.dump(response.json(), f, indent=4)
         return format_flight_response(response.json())
     else:
-        return {
-            "error": f"Failed to retrieve round-trip flight data. Status code: {response.status_code}"
-        }
+        try:
+            message = "Error response:", response.json()
+        except Exception:
+            message = "Error response is not in JSON format."
+        return FlightToolResponse(
+            status="error",
+            message=f"Failed to retrieve round-trip flight data. Status code: {response.status_code}. {message}",
+        )
 
 
 if __name__ == "__main__":
