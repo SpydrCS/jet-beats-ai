@@ -82,12 +82,6 @@ root_agent = LlmAgent(
 
 
 if __name__ == "__main__":
-    """Inline demo that actually RUNS the structured agent and prints JSON output.
-
-    Running: `python -m agents.context_agent` will now execute a single prompt
-    through a `Runner` with an in-memory session and print both the raw final
-    response and the parsed JSON stored under `structured_context_result`.
-    """
 
     import asyncio
     from google.genai import types
