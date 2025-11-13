@@ -1,9 +1,12 @@
 import json
-from models.hotel import HotelItemOut, HotelSearchResultOut
-from normalizers.booking import normalize_booking_response
+from agents.hotel_agent.utils import normalize_booking_response
 
 # Load the raw response from file
-with open("responses/hotels_lat-38_lng--9_lat-38_lng--9_2025-12-09_2025-12-11_nofilters.json", "r", encoding="utf-8") as f:
+with open(
+    "responses/hotels_lat-38_lng--9_lat-38_lng--9_2025-12-09_2025-12-11_nofilters.json",
+    "r",
+    encoding="utf-8",
+) as f:
     raw_response = json.load(f)
 
 # Normalize the response using your normalizer

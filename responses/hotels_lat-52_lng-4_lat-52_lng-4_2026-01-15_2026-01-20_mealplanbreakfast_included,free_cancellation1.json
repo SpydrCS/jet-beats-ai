@@ -1,0 +1,131 @@
+{
+    "data": {
+        "appSearchMetaData": "",
+        "sorters": [
+            {
+                "option": {
+                    "name": "upsort_bh",
+                    "tooltipTranslationTag": {
+                        "translation": null
+                    },
+                    "captionTranslationTag": {
+                        "translation": "Entire homes & apartments first"
+                    },
+                    "__typename": "SorterOption",
+                    "selected": false
+                }
+            },
+            {
+                "option": {
+                    "name": "distance",
+                    "tooltipTranslationTag": {
+                        "translation": null
+                    },
+                    "captionTranslationTag": {
+                        "translation": "Distance from place of interest"
+                    },
+                    "__typename": "SorterOption",
+                    "selected": false
+                }
+            },
+            {
+                "option": {
+                    "selected": true,
+                    "tooltipTranslationTag": {
+                        "translation": null
+                    },
+                    "name": "popularity",
+                    "__typename": "SorterOption",
+                    "captionTranslationTag": {
+                        "translation": "Top Picks for Solo Travelers"
+                    }
+                }
+            },
+            {
+                "option": {
+                    "__typename": "SorterOption",
+                    "captionTranslationTag": {
+                        "translation": "Property rating (high to low)"
+                    },
+                    "name": "class_descending",
+                    "tooltipTranslationTag": {
+                        "translation": null
+                    },
+                    "selected": false
+                }
+            },
+            {
+                "option": {
+                    "name": "class_ascending",
+                    "tooltipTranslationTag": {
+                        "translation": null
+                    },
+                    "captionTranslationTag": {
+                        "translation": "Property rating (low to high)"
+                    },
+                    "__typename": "SorterOption",
+                    "selected": false
+                }
+            },
+            {
+                "option": {
+                    "captionTranslationTag": {
+                        "translation": "Guest Review Score"
+                    },
+                    "__typename": "SorterOption",
+                    "tooltipTranslationTag": {
+                        "translation": null
+                    },
+                    "name": "review_score",
+                    "selected": false
+                }
+            },
+            {
+                "option": {
+                    "__typename": "SorterOption",
+                    "captionTranslationTag": {
+                        "translation": "Price (low to high)"
+                    },
+                    "name": "price",
+                    "tooltipTranslationTag": {
+                        "translation": null
+                    },
+                    "selected": false
+                }
+            }
+        ],
+        "searchMeta": {
+            "nbAdults": 1,
+            "nbRooms": 1,
+            "nbChildren": 0,
+            "dates": {
+                "checkout": "2026-01-20",
+                "lengthOfStayInDays": 5,
+                "checkin": "2026-01-15"
+            },
+            "boundingBoxes": [
+                {
+                    "swLon": 0.0,
+                    "swLat": 0.0,
+                    "type": "SMART_AV",
+                    "neLon": 0.0,
+                    "neLat": 0.0
+                }
+            ],
+            "__typename": "SearchMeta",
+            "childrenAges": []
+        },
+        "appliedFilterOptions": [],
+        "results": [],
+        "destinationLocation": {
+            "name": {
+                "text": ""
+            },
+            "countryCode": null
+        },
+        "__typename": "SearchQueryOutput",
+        "recommendedFilterOptions": []
+    },
+    "status": true,
+    "message": "Successful"
+}

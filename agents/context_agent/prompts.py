@@ -31,7 +31,7 @@ Also, if possible, I'd like to fly with British Airways and stay at a Hilton pro
 """
 
 INPUT_PROMPT_3 = """
-Hi JetBeats! I'm planning a trip from Berlin to our Amsterdam office. I'd like to leave between January 15 and 17 and come back between January 20 and 22. I'm flexible on flight times, but earlier in the day would be great.
+Hi JetBeats! I'm planning a trip from Berlin to our Amsterdam office (Gustav Mahlerlaan 2970, 1081 LA Amsterdam, Netherlands). I'd like to leave on January 15, 2026 and come back on January 20, 2026. I'm flexible on flight times, but earlier in the day would be great.
 For the hotel, I'm looking for something budget-friendly, clean, and safe, ideally within walking distance of a bus stop since I'll rely on buses for transportation. No need for luxury amenities — just Wi-Fi and breakfast would be perfect.
 I don't have any airline or hotel loyalty programs, so choose whatever is most cost-effective.
 """

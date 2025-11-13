@@ -1,8 +1,8 @@
 from google.adk.agents import LlmAgent
-from tools import flight_tools
+from .tools import flight_tools
 from dotenv import load_dotenv
 import os
-from models.flight import FlightRequest, FlightToolResponse
+from .models import FlightRequest, FlightToolResponse
 
 load_dotenv()
 
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     from google.genai import types
     import json
     from utils.run import run_agent
-    from prompts.input.flight_agent import INPUT_PROMPT_1
+    from agents.flight_agent.prompts import INPUT_PROMPT_1
 
     app_name = "flight_information_app"
 

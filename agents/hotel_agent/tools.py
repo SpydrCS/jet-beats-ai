@@ -1,7 +1,11 @@
 from typing import List
-from models.hotel import HotelSearchResultOut, HotelItemOut, HotelToolResponse
-from normalizers.booking import normalize_booking_response
-from utils.hotel import (
+from .models import (
+    HotelSearchResultOut,
+    HotelItemOut,
+    HotelToolResponse,
+)
+from .utils import (
+    normalize_booking_response,
     get_coordinates_from_address,
     search_hotels,
     calculate_road_distance_between_coordinates,
@@ -84,7 +88,11 @@ def get_hotels_near_destination(
     """
     coords = get_coordinates_from_address(address, country, locality)
     if "error" in coords:
-        return HotelToolResponse(status="error", message=f"geocode_failed: {coords['error']}")
+        return HotelToolResponse(
+            status="error",
+            message=f"geocode_failed: {coords['error']}",
+            total_results=0,
+        )
 
     filters: List[str] = []
     if include_breakfast:
@@ -95,16 +103,20 @@ def get_hotels_near_destination(
 
     raw = search_hotels(coords, checkin_date, checkout_date, filters_str)
     if "error" in raw:
-        return HotelToolResponse(status="error", message=raw["error"])
+        return HotelToolResponse(status="error", message=raw["error"], total_results=0)
 
     normalized: HotelSearchResultOut = normalize_booking_response(raw)
     if not normalized.items:
-        return HotelToolResponse(status="success", items=[], total_results=normalized.total_results)
+        return HotelToolResponse(
+            status="success", items=[], total_results=normalized.total_results
+        )
 
     # Distances enrichment
     client_xy = [coords["location"]["lng"], coords["location"]["lat"]]
     targets: List[List[float]] = [[h.longitude, h.latitude] for h in normalized.items]
-    dist_resp = calculate_road_distance_between_coordinates(client_xy, targets, mode=transport_mode)
+    dist_resp = calculate_road_distance_between_coordinates(
+        client_xy, targets, mode=transport_mode
+    )
     distances = (dist_resp or {}).get("data") or []
     units = (dist_resp or {}).get("distance_units") or "meters"
     dist_by_idx = {d.get("target_index"): d for d in distances}
@@ -115,7 +127,9 @@ def get_hotels_near_destination(
             h.distance_meters = d.get("distance") or d.get("distance_meters")
             h.travel_time_seconds = d.get("time") or d.get("travel_time_seconds")
             h.distance_units = units
-            h.transport_mode = "walk" if transport_mode not in ("walk", "drive") else transport_mode
+            h.transport_mode = (
+                "walk" if transport_mode not in ("walk", "drive") else transport_mode
+            )
 
     # Order by travel time then price
     def rank_key(x: HotelItemOut):
@@ -127,4 +141,9 @@ def get_hotels_near_destination(
     if top_k:
         normalized.items = normalized.items[:top_k]
 
-    return HotelToolResponse(status="success", items=normalized.items, total_results=normalized.total_results)
+    return HotelToolResponse(
+        status="success", items=normalized.items, total_results=normalized.total_results
+    )
+
+
+hotel_tools: list = [get_hotels_near_destination]

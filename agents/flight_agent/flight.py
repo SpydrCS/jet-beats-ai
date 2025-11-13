@@ -1,5 +1,5 @@
 import json
-from models.flight import FlightToolResponse
+from .models import FlightToolResponse
 
 
 def format_flight_response(data: dict) -> FlightToolResponse:

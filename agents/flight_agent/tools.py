@@ -2,8 +2,8 @@ import json
 import requests
 from dotenv import load_dotenv
 import os
-from utils.flight import format_flight_response
-from models.flight import FlightToolResponse
+from .flight import format_flight_response
+from .models import FlightToolResponse
 
 load_dotenv()
 RAPID_API_KEY = os.getenv("RAPID_API_KEY")
@@ -257,6 +257,8 @@ def search_roundtrip_flights(
             message=f"Failed to retrieve round-trip flight data. Status code: {response.status_code}. {message}",
         )
 
+
+flight_tools: list = [search_oneway_flights, search_roundtrip_flights]
 
 if __name__ == "__main__":
     # # Example usage

@@ -1,8 +1,8 @@
-from prompts.input.context_agent import INPUT_PROMPT_1
 from dotenv import load_dotenv
 import os
 from google.adk.agents import LlmAgent
-from models.context import TravelPromptInput, StructuredTravelContext
+from .models import TravelPromptInput, StructuredTravelContext
+from .prompts import INPUT_PROMPT_1
 
 load_dotenv()
 
