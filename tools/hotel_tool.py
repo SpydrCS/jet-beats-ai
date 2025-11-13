@@ -1,4 +1,3 @@
-# tools/hotel_tools.py
 from typing import List
 from models.models_hotels import HotelSearchResultOut, HotelItemOut
 from normalizers.booking import normalize_booking_response
@@ -9,6 +8,7 @@ from utils.hotel import (
 )
 
 __all__ = ["get_hotels_near_destination"]
+
 
 def get_hotels_near_destination(
     address: str,
@@ -34,8 +34,10 @@ def get_hotels_near_destination(
         return {"error": f"geocode_failed: {coords['error']}"}
 
     filters = []
-    if include_breakfast:   filters.append("mealplan::breakfast_included")
-    if free_cancellation:   filters.append("free_cancellation::1")
+    if include_breakfast:
+        filters.append("mealplan::breakfast_included")
+    if free_cancellation:
+        filters.append("free_cancellation::1")
     filters_str = ",".join(filters) if filters else ""
 
     raw = search_hotels(coords, checkin_date, checkout_date, filters_str)
@@ -51,7 +53,9 @@ def get_hotels_near_destination(
     client_xy = [coords["location"]["lng"], coords["location"]["lat"]]
     targets: List[List[float]] = [[h.longitude, h.latitude] for h in normalized.items]
 
-    dist_resp = calculate_road_distance_between_coordinates(client_xy, targets, mode=transport_mode)
+    dist_resp = calculate_road_distance_between_coordinates(
+        client_xy, targets, mode=transport_mode
+    )
     distances = (dist_resp or {}).get("data") or []
     units = (dist_resp or {}).get("distance_units") or "meters"
     dist_by_idx = {d.get("target_index"): d for d in distances}
@@ -62,7 +66,9 @@ def get_hotels_near_destination(
             h.distance_meters = d.get("distance")
             h.travel_time_seconds = d.get("time")
             h.distance_units = units
-            h.transport_mode = "walk" if transport_mode not in ("walk", "drive") else transport_mode
+            h.transport_mode = (
+                "walk" if transport_mode not in ("walk", "drive") else transport_mode
+            )
 
     # ordenar por tempo e preço
     def rank_key(x: HotelItemOut):
