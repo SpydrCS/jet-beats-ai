@@ -1,5 +1,5 @@
 import json
-from models.models_hotels import HotelItemOut, HotelSearchResultOut
+from models.hotel import HotelItemOut, HotelSearchResultOut
 from normalizers.booking import normalize_booking_response
 
 # Load the raw response from file

@@ -3,7 +3,7 @@ import os
 from typing import Optional, Literal
 from pydantic import BaseModel, Field
 from google.adk.agents import LlmAgent
-from models.models_hotels import HotelSearchResultOut
+from models.hotel import HotelSearchResultOut
 from tools import hotel_tools
 
 load_dotenv()

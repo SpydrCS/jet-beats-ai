@@ -1,5 +1,5 @@
 from typing import List
-from models.models_hotels import HotelSearchResultOut, HotelItemOut
+from models.hotel import HotelSearchResultOut, HotelItemOut, HotelToolResponse
 from normalizers.booking import normalize_booking_response
 from utils.hotel import (
     get_coordinates_from_address,
@@ -20,20 +20,73 @@ def get_hotels_near_destination(
     free_cancellation: bool = True,
     transport_mode: str = "walk",  # "walk" | "drive"
     top_k: int = 5,
-) -> dict:
-    """
-    - Geocodifica (Google)
-    - Pesquisa hotéis (RapidAPI) **com cache**
-    - Normaliza
-    - Calcula distância/tempo (Geoapify) **sem cache**
-    - Ordena por tempo e preço
-    - Devolve JSON (dict) pronto a renderizar
+) -> HotelToolResponse:
+    """Search, normalize, enrich and rank hotels near a destination.
+
+    This tool orchestrates three providers:
+      1) Google Geocoding (address -> point + viewport)
+      2) Booking.com (RapidAPI) hotel search (cached on disk)
+      3) Geoapify Route Matrix (distance/time enrichment; no cache)
+
+    Args:
+        address (str): Destination address or POI (e.g., "Microsoft Parque das Nações, Lisboa").
+        checkin_date (str): Check-in date in YYYY-MM-DD format.
+        checkout_date (str): Check-out date in YYYY-MM-DD format.
+        country (str, optional): ISO-3166-1 alpha-2 country code (e.g., "PT").
+        locality (str, optional): City/locality hint (e.g., "Lisboa").
+        include_breakfast (bool): If True, include breakfast filter.
+        free_cancellation (bool): If True, include free cancellation filter.
+        transport_mode (str): "walk" or "drive" used for distance matrix.
+        top_k (int): Max number of hotels returned after ranking.
+
+    Returns:
+        HotelToolResponse: Pydantic model with status, items and total_results.
+
+        Success example:
+            {
+              "status": "success",
+              "items": [
+                {
+                  "name": "HF Fenix Porto",
+                  "latitude": 41.1547,
+                  "longitude": -8.63045,
+                  "address": "Rua Exemplo 123",
+                  "stars": 4.0,
+                  "review_score": 8.8,
+                  "review_count": 2298,
+                  "total_price_amount": 542.3,
+                  "total_price_currency": "EUR",
+                  "distance_meters": 1200,
+                  "travel_time_seconds": 900,
+                  "distance_units": "meters",
+                  "transport_mode": "walk",
+                  "provider": "booking_com",
+                  "provider_hotel_id": "123456",
+                  "deep_link": null
+                },
+                ...
+              ],
+              "total_results": 42
+            }
+
+        Failure example:
+            {
+              "status": "error",
+              "message": "geocode_failed: Geocoding API error: ZERO_RESULTS",
+              "items": [],
+              "total_results": 0
+            }
+
+    Notes:
+      - Hotel search is cached under `responses/` by bounding box and dates.
+      - Distance matrix is not cached; time/distance fields may be None for unreachable targets.
+      - Ranking prioritizes lowest travel time, then lowest total price.
     """
     coords = get_coordinates_from_address(address, country, locality)
     if "error" in coords:
-        return {"error": f"geocode_failed: {coords['error']}"}
+        return HotelToolResponse(status="error", message=f"geocode_failed: {coords['error']}")
 
-    filters = []
+    filters: List[str] = []
     if include_breakfast:
         filters.append("mealplan::breakfast_included")
     if free_cancellation:
@@ -42,20 +95,16 @@ def get_hotels_near_destination(
 
     raw = search_hotels(coords, checkin_date, checkout_date, filters_str)
     if "error" in raw:
-        return {"error": raw["error"]}
+        return HotelToolResponse(status="error", message=raw["error"])
 
     normalized: HotelSearchResultOut = normalize_booking_response(raw)
-
     if not normalized.items:
-        return normalized.model_dump()  # nothing to enrich, return empty list early
+        return HotelToolResponse(status="success", items=[], total_results=normalized.total_results)
 
-    # distâncias
+    # Distances enrichment
     client_xy = [coords["location"]["lng"], coords["location"]["lat"]]
     targets: List[List[float]] = [[h.longitude, h.latitude] for h in normalized.items]
-
-    dist_resp = calculate_road_distance_between_coordinates(
-        client_xy, targets, mode=transport_mode
-    )
+    dist_resp = calculate_road_distance_between_coordinates(client_xy, targets, mode=transport_mode)
     distances = (dist_resp or {}).get("data") or []
     units = (dist_resp or {}).get("distance_units") or "meters"
     dist_by_idx = {d.get("target_index"): d for d in distances}
@@ -63,14 +112,12 @@ def get_hotels_near_destination(
     for i, h in enumerate(normalized.items):
         d = dist_by_idx.get(i)
         if d:
-            h.distance_meters = d.get("distance")
-            h.travel_time_seconds = d.get("time")
+            h.distance_meters = d.get("distance") or d.get("distance_meters")
+            h.travel_time_seconds = d.get("time") or d.get("travel_time_seconds")
             h.distance_units = units
-            h.transport_mode = (
-                "walk" if transport_mode not in ("walk", "drive") else transport_mode
-            )
+            h.transport_mode = "walk" if transport_mode not in ("walk", "drive") else transport_mode
 
-    # ordenar por tempo e preço
+    # Order by travel time then price
     def rank_key(x: HotelItemOut):
         t = x.travel_time_seconds if x.travel_time_seconds is not None else 10**12
         p = x.total_price_amount if x.total_price_amount is not None else 10**12
@@ -80,4 +127,4 @@ def get_hotels_near_destination(
     if top_k:
         normalized.items = normalized.items[:top_k]
 
-    return normalized.model_dump()
+    return HotelToolResponse(status="success", items=normalized.items, total_results=normalized.total_results)

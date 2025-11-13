@@ -1,6 +1,6 @@
 # normalizers/booking.py
 from typing import Dict, Any, List, Optional
-from models.models_hotels import HotelItemOut, HotelSearchResultOut
+from models.hotel import HotelItemOut, HotelSearchResultOut
 
 def normalize_booking_response(raw: Dict[str, Any]) -> HotelSearchResultOut:
     """
