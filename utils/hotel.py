@@ -215,33 +215,45 @@ def search_hotels(
 
 
 def calculate_road_distance_between_coordinates(
-    source_coords: list[float], target_coords: list[list[float]]
-) -> dict:
-    """
-    Calculates distance/time using Geoapify Route Matrix. No cache.
-    Returns {'data': [...], 'distance_units': 'meters'} or {'error': ...}
-    """
-    if not target_coords:
-        return {"data": [], "distance_units": "meters"}
-    url = "https://api.geoapify.com/v1/routematrix"
-    headers = {"Content-Type": "application/json"}
-    params = {"apiKey": GEOAPIFY_API_KEY}
-    data = {
-        "mode": "walk",
-        "sources": [{"location": source_coords}],
-        "targets": [{"location": coord} for coord in target_coords],
-    }
-    resp = requests.post(url, headers=headers, params=params, json=data, timeout=30)
-    if resp.status_code != 200:
-        return {"error": f"Failed to retrieve distance data. Status code: {resp.status_code}"}
-    try:
-        j = resp.json()
-        return {
-            "data": (j.get("sources_to_targets") or [])[0],
-            "distance_units": j.get("distance_units") or "meters",
+    source_coords: list[float],
+    target_coords: list[list[float]],
+    mode: str = "walk",  # "walk" | "drive"
+    ) -> dict:
+        """
+        Calculates distance/time using Geoapify Route Matrix. No cache.
+        Returns {'data': [...], 'distance_units': 'meters'} or {'error': ...}
+        """
+        if not target_coords:
+            return {"data": [], "distance_units": "meters"}
+
+        # sanity check simples
+        if mode not in ("walk", "drive"):
+            mode = "walk"
+
+        url = "https://api.geoapify.com/v1/routematrix"
+        headers = {"Content-Type": "application/json"}
+        params = {"apiKey": GEOAPIFY_API_KEY}
+        data = {
+            "mode": mode,
+            "sources": [{"location": source_coords}],           # [lon, lat]
+            "targets": [{"location": coord} for coord in target_coords],  # [[lon, lat], ...]
         }
-    except Exception as e:
-        return {"error": f"Error parsing distance response: {e}"}
+        try:
+            resp = requests.post(url, headers=headers, params=params, json=data, timeout=30)
+        except Exception as e:
+            return {"error": f"Distance API request failed: {e}"}
+
+        if resp.status_code != 200:
+            return {"error": f"Failed to retrieve distance data. Status code: {resp.status_code}"}
+
+        try:
+            j = resp.json()
+            return {
+                "data": (j.get("sources_to_targets") or [])[0],
+                "distance_units": j.get("distance_units") or "meters",
+            }
+        except Exception as e:
+            return {"error": f"Error parsing distance response: {e}"}
 
 
 def enrich_hotels_with_distance(
