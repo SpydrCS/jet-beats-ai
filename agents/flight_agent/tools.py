@@ -95,7 +95,7 @@ def search_oneway_flights(
     - Expects valid IATA codes and an ISO-formatted date.
     """
     # check if file with api response already exists in responses/oneway_{origin}_{destination}_{date}.json
-    file_path = f"responses/oneway_{origin}_{destination}_{date}.json"
+    file_path = f"../responses/oneway_{origin}_{destination}_{date}.json"
     if os.path.exists(file_path):
         with open(file_path, "r") as f:
             print("Loading cached one-way flight data from file.")
@@ -118,7 +118,7 @@ def search_oneway_flights(
     }
     response = requests.get(url, headers=headers, params=query_string)
     if response.status_code == 200:
-        os.makedirs("responses", exist_ok=True)
+        os.makedirs("../responses", exist_ok=True)
         with open(file_path, "w") as f:
             json.dump(response.json(), f, indent=4)
         return format_flight_response(response.json())
@@ -218,9 +218,7 @@ def search_roundtrip_flights(
     - Expects valid IATA codes and an ISO-formatted date.
     """
     # check if file with api response already exists in responses/roundtrip_{origin}_{destination}_{depart_date}_{return_date}.json
-    file_path = (
-        f"responses/roundtrip_{origin}_{destination}_{depart_date}_{return_date}.json"
-    )
+    file_path = f"../responses/roundtrip_{origin}_{destination}_{depart_date}_{return_date}.json"
     if os.path.exists(file_path):
         with open(file_path, "r") as f:
             print("Loading cached round-trip flight data from file.")
@@ -243,7 +241,7 @@ def search_roundtrip_flights(
     }
     response = requests.get(url, headers=headers, params=query_string)
     if response.status_code == 200:
-        os.makedirs("responses", exist_ok=True)
+        os.makedirs("../responses", exist_ok=True)
         with open(file_path, "w") as f:
             json.dump(response.json(), f, indent=4)
         return format_flight_response(response.json())
