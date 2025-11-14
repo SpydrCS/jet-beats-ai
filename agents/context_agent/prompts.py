@@ -24,6 +24,12 @@ For the hotel, I'm looking for something mid-range, with good Wi-Fi and breakfas
 Also, if possible, I'd like to fly with TAP Air Portugal and stay at a Marriott hotel if there's one nearby.
 """
 
+INPUT_PROMPT_WORKING = """
+Hi JetBeats! I need to plan a trip from Berlin to Amsterdam. I'd like to leave on December 15, 2025 and come back on December 20, 2025. I'm flexible on flight times, but earlier in the day would be great.
+For the hotel, I'm looking for something budget-friendly with Wi-Fi and breakfast included, preferably in Amsterdam city center. At the destination, I'll mostly walk or use public transport.
+I don't have any airline or hotel loyalty programs, so choose whatever is most cost-effective.
+"""
+
 INPUT_PROMPT_2 = """
 Hi JetBeats! I need to arrange a trip from Paris to our London office. I'd like to leave between December 3 and 5 and return between December 8 and 10. For flights, I prefer late morning departures and early afternoon returns.
 For the hotel, I'd like something high-end, preferably a 5-star hotel with a gym and room service, as close as possible to the office. At the destination, I'll mostly use taxis, so proximity to metro stations isn't a priority.

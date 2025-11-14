@@ -1,30 +1,57 @@
 {
     "data": {
-        "appliedFilterOptions": [],
+        "destinationLocation": {
+            "name": {
+                "text": ""
+            },
+            "countryCode": null
+        },
+        "searchMeta": {
+            "childrenAges": [],
+            "boundingBoxes": [
+                {
+                    "swLat": 0.0,
+                    "swLon": 0.0,
+                    "type": "SMART_AV",
+                    "neLat": 0.0,
+                    "neLon": 0.0
+                }
+            ],
+            "nbAdults": 1,
+            "nbChildren": 0,
+            "dates": {
+                "checkout": "2026-01-20",
+                "checkin": "2026-01-15",
+                "lengthOfStayInDays": 5
+            },
+            "nbRooms": 1,
+            "__typename": "SearchMeta"
+        },
+        "__typename": "SearchQueryOutput",
         "recommendedFilterOptions": [],
-        "appSearchMetaData": "",
+        "appliedFilterOptions": [],
         "sorters": [
             {
                 "option": {
+                    "name": "upsort_bh",
+                    "captionTranslationTag": {
+                        "translation": "Entire homes & apartments first"
+                    },
+                    "__typename": "SorterOption",
                     "tooltipTranslationTag": {
                         "translation": null
                     },
-                    "name": "upsort_bh",
-                    "selected": false,
-                    "__typename": "SorterOption",
-                    "captionTranslationTag": {
-                        "translation": "Entire homes & apartments first"
-                    }
+                    "selected": false
                 }
             },
             {
                 "option": {
-                    "name": "distance",
-                    "selected": false,
-                    "__typename": "SorterOption",
                     "captionTranslationTag": {
                         "translation": "Distance from place of interest"
                     },
+                    "__typename": "SorterOption",
+                    "name": "distance",
+                    "selected": false,
                     "tooltipTranslationTag": {
                         "translation": null
                     }
@@ -32,12 +59,12 @@
             },
             {
                 "option": {
+                    "__typename": "SorterOption",
                     "captionTranslationTag": {
                         "translation": "Top Picks for Solo Travelers"
                     },
-                    "__typename": "SorterOption",
-                    "selected": true,
                     "name": "popularity",
+                    "selected": true,
                     "tooltipTranslationTag": {
                         "translation": null
                     }
@@ -58,73 +85,46 @@
             },
             {
                 "option": {
+                    "selected": false,
                     "tooltipTranslationTag": {
                         "translation": null
                     },
-                    "selected": false,
-                    "name": "class_ascending",
                     "captionTranslationTag": {
                         "translation": "Property rating (low to high)"
                     },
-                    "__typename": "SorterOption"
+                    "__typename": "SorterOption",
+                    "name": "class_ascending"
                 }
             },
             {
                 "option": {
-                    "tooltipTranslationTag": {
-                        "translation": null
-                    },
-                    "name": "review_score",
-                    "selected": false,
+                    "__typename": "SorterOption",
                     "captionTranslationTag": {
                         "translation": "Guest Review Score"
                     },
-                    "__typename": "SorterOption"
+                    "name": "review_score",
+                    "selected": false,
+                    "tooltipTranslationTag": {
+                        "translation": null
+                    }
                 }
             },
             {
                 "option": {
-                    "tooltipTranslationTag": {
-                        "translation": null
-                    },
                     "__typename": "SorterOption",
                     "captionTranslationTag": {
                         "translation": "Price (low to high)"
                     },
                     "name": "price",
-                    "selected": false
+                    "selected": false,
+                    "tooltipTranslationTag": {
+                        "translation": null
+                    }
                 }
             }
         ],
-        "destinationLocation": {
-            "name": {
-                "text": ""
-            },
-            "countryCode": null
-        },
-        "results": [],
-        "searchMeta": {
-            "childrenAges": [],
-            "dates": {
-                "checkin": "2026-01-15",
-                "checkout": "2026-01-20",
-                "lengthOfStayInDays": 5
-            },
-            "nbAdults": 1,
-            "__typename": "SearchMeta",
-            "boundingBoxes": [
-                {
-                    "neLon": 0.0,
-                    "neLat": 0.0,
-                    "swLon": 0.0,
-                    "type": "SMART_AV",
-                    "swLat": 0.0
-                }
-            ],
-            "nbRooms": 1,
-            "nbChildren": 0
-        },
-        "__typename": "SearchQueryOutput"
+        "appSearchMetaData": "",
+        "results": []
     },
     "status": true,
     "message": "Successful"

@@ -14,12 +14,16 @@ from .utils import (
 __all__ = ["get_hotels_near_destination"]
 
 
+from typing import Optional
+
 def get_hotels_near_destination(
-    address: str,
-    checkin_date: str,
-    checkout_date: str,
-    country: str = "",
+    final_destination: str,
+    departure_date: str,
+    return_date: str,
+    country_code: str = "",
     locality: str = "",
+    hotel_rating_preference: Optional[str] = None,
+    hotel_extras_preference: Optional[list] = None,
     include_breakfast: bool = True,
     free_cancellation: bool = True,
     transport_mode: str = "walk",  # "walk" | "drive"
@@ -86,7 +90,22 @@ def get_hotels_near_destination(
       - Distance matrix is not cached; time/distance fields may be None for unreachable targets.
       - Ranking prioritizes lowest travel time, then lowest total price.
     """
-    coords = get_coordinates_from_address(address, country, locality)
+    print("Hotel tool called with:", {
+        "final_destination": final_destination,
+        "departure_date": departure_date,
+        "return_date": return_date,
+        "country_code": country_code,
+        "locality": locality,
+        "hotel_rating_preference": hotel_rating_preference,
+        "hotel_extras_preference": hotel_extras_preference,
+        "include_breakfast": include_breakfast,
+        "free_cancellation": free_cancellation,
+        "transport_mode": transport_mode,
+        "top_k": top_k
+    })
+    
+    coords = get_coordinates_from_address(final_destination, country_code, locality)
+    print(f"Geocoding result: {coords}")
     if "error" in coords:
         return HotelToolResponse(
             status="error",
@@ -101,12 +120,17 @@ def get_hotels_near_destination(
         filters.append("free_cancellation::1")
     filters_str = ",".join(filters) if filters else ""
 
-    raw = search_hotels(coords, checkin_date, checkout_date, filters_str)
+    raw = search_hotels(coords, departure_date, return_date, filters_str)
     if "error" in raw:
         return HotelToolResponse(status="error", message=raw["error"], total_results=0)
 
+    print(f"Raw hotel search returned {len(raw.get('data', {}).get('results', []))} raw results")
+    
     normalized: HotelSearchResultOut = normalize_booking_response(raw)
+    print(f"After normalization: {len(normalized.items)} items, total_results: {normalized.total_results}")
+    
     if not normalized.items:
+        print("No items after normalization - returning empty result")
         return HotelToolResponse(
             status="success", items=[], total_results=normalized.total_results
         )

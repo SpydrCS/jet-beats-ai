@@ -9,8 +9,10 @@ from .tools import hotel_tools
 load_dotenv()
 
 
+
+# Updated to match context agent/flight agent field names
 class HotelAgentInput(BaseModel):
-    final_destination_address: str = Field(
+    final_destination: str = Field(
         description="Address/POI, e.g., 'Microsoft Parque das Nações, Lisboa'."
     )
     country_code: Optional[str] = Field(
@@ -19,8 +21,10 @@ class HotelAgentInput(BaseModel):
     locality: Optional[str] = Field(
         default=None, description="City/locality, e.g., 'Lisboa'."
     )
-    checkin_date: str = Field(description="YYYY-MM-DD")
-    checkout_date: str = Field(description="YYYY-MM-DD")
+    departure_date: str = Field(description="YYYY-MM-DD")
+    return_date: str = Field(description="YYYY-MM-DD")
+    hotel_rating_preference: Optional[str] = Field(default=None, description="Hotel rating preference, e.g., 'budget-friendly'.")
+    hotel_extras_preference: Optional[list[str]] = Field(default=None, description="List of hotel extras, e.g., ['Wi-Fi', 'breakfast included'].")
     include_breakfast: bool = Field(default=True)
     free_cancellation: bool = Field(default=True)
     transport_mode: Literal["walk", "drive"] = Field(default="walk")
@@ -50,28 +54,3 @@ root_agent = LlmAgent(
     output_key="structured_hotels_result",
     tools=hotel_tools,
 )
-
-if __name__ == "__main__":
-    import asyncio
-    from google.genai import types
-    import json
-    from utils.run import run_agent
-
-    app_name = "hotel_app"
-
-    TEST_INPUT = {
-        "final_destination_address": "Microsoft Portugal, Parque das Nações, Lisboa",
-        "country_code": "PT",
-        "locality": "Lisboa",
-        "checkin_date": "2025-12-09",
-        "checkout_date": "2025-12-11",
-        "include_breakfast": False,
-        "free_cancellation": False,
-        "transport_mode": "walk",
-        "top_k": 20,
-    }
-
-    user_content = types.Content(
-        role="user", parts=[types.Part(text=json.dumps(TEST_INPUT))]
-    )
-    asyncio.run(run_agent(app_name, root_agent, user_content))

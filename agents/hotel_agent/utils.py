@@ -17,8 +17,10 @@ def normalize_booking_response(raw: Dict[str, Any]) -> HotelSearchResultOut:
     """
     results = (((raw or {}).get("data") or {}).get("results")) or []
     items: List[HotelItemOut] = []
+    
+    print(f"normalize_booking_response: Processing {len(results)} raw results")
 
-    for r in results:
+    for i, r in enumerate(results):
         bp = r.get("basicPropertyData") or {}
         loc = bp.get("location") or {}
         reviews = bp.get("reviews") or {}
@@ -57,7 +59,11 @@ def normalize_booking_response(raw: Dict[str, Any]) -> HotelSearchResultOut:
 
         if item.latitude is not None and item.longitude is not None:
             items.append(item)
+            print(f"  Hotel {i+1}: {item.name} at ({item.latitude}, {item.longitude}) - ADDED")
+        else:
+            print(f"  Hotel {i+1}: {bp.get('name', 'Unnamed')} - SKIPPED (no coordinates: lat={item.latitude}, lng={item.longitude})")
 
+    print(f"normalize_booking_response: Returning {len(items)} valid items out of {len(results)} raw results")
     return HotelSearchResultOut(items=items, total_results=len(results))
 
 
@@ -254,14 +260,25 @@ def search_hotels(
     }
     if filters:
         params["categoriesFilters"] = filters
+    
+    print(f"API request params: {params}")
+    print(f"API request filters: {filters}")
 
     response = requests.get(url, headers=headers, params=params)
+    
+    print(f"API response status: {response.status_code}")
+    if response.status_code != 200:
+        print(f"API response text: {response.text}")
 
     if response.status_code == 200:
+        response_data = response.json()
+        results_count = len(response_data.get("data", {}).get("results", []))
+        print(f"API returned {results_count} results")
+        
         os.makedirs("responses", exist_ok=True)
         with open(cache_filename, "w", encoding="utf-8") as f:
-            json.dump(response.json(), f, indent=4)
-        return response.json()
+            json.dump(response_data, f, indent=4)
+        return response_data
     else:
         return {
             "error": f"Failed to retrieve hotel data. Status code: {response.status_code}"
