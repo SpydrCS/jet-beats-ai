@@ -1,13 +1,10 @@
-import requests
-import os
-from dotenv import load_dotenv
 from typing import Dict, Any, List
 from .models import HotelItemOut, HotelSearchResultOut
-
-load_dotenv()
-GEOAPIFY_API_KEY = os.getenv("GEOAPIFY_API_KEY")
-GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
-RAPID_API_KEY = os.getenv("RAPID_API_KEY")
+from .api_calls import (
+    get_coordinates_from_address,
+    search_hotels,
+    calculate_road_distance_between_coordinates
+)
 
 
 def normalize_booking_response(raw: Dict[str, Any]) -> HotelSearchResultOut:
@@ -41,12 +38,21 @@ def normalize_booking_response(raw: Dict[str, Any]) -> HotelSearchResultOut:
                 amount = fp.get("amount")
                 currency = fp.get("currency")
 
+        # Check for valid coordinates before creating the hotel item
+        lat = loc.get("latitude")
+        lng = loc.get("longitude")
+        
+        # Skip hotels without valid coordinates (None or 0.0, 0.0)
+        if (lat is None or lng is None or (lat == 0.0 and lng == 0.0)):
+            print(f"  Hotel {i+1}: {bp.get('name', 'Unnamed')} - SKIPPED (no valid coordinates: lat={lat}, lng={lng})")
+            continue
+
         item = HotelItemOut(
             name=bp.get("name")
             or (r.get("displayName") or {}).get("text")
             or "Unnamed",
-            latitude=loc.get("latitude", 0.0),
-            longitude=loc.get("longitude", 0.0),
+            latitude=lat,
+            longitude=lng,
             address=loc.get("address"),
             stars=stars.get("value"),
             review_score=reviews.get("totalScore"),
@@ -57,278 +63,11 @@ def normalize_booking_response(raw: Dict[str, Any]) -> HotelSearchResultOut:
             deep_link=None,
         )
 
-        if item.latitude is not None and item.longitude is not None:
-            items.append(item)
-            print(f"  Hotel {i+1}: {item.name} at ({item.latitude}, {item.longitude}) - ADDED")
-        else:
-            print(f"  Hotel {i+1}: {bp.get('name', 'Unnamed')} - SKIPPED (no coordinates: lat={item.latitude}, lng={item.longitude})")
+        items.append(item)
+        print(f"  Hotel {i+1}: {item.name} at ({item.latitude}, {item.longitude}) - ADDED")
 
     print(f"normalize_booking_response: Returning {len(items)} valid items out of {len(results)} raw results")
     return HotelSearchResultOut(items=items, total_results=len(results))
-
-
-def get_coordinates_from_address(address: str, country: str, locality: str) -> dict:
-    """
-    Fetches the coordinates (latitude and longitude) for a given address using the Google Maps API.
-
-    Args:
-        address (str): The address to geocode (e.g., "Deloitte Bom Sucesso").
-        country (str): The two letter ISO 3166-1 COUNTRY code (e.g., "PT" for Portugal). Use only if certain of the country.
-        locality (str): The locality or city (e.g., "Porto"). Use only if certain of the locality.
-
-    Returns:
-        dict: A dictionary containing 'location' and 'viewport' keys on success,
-            or an 'error' key with a message on failure.
-        Success example:
-            {
-                "location": {
-                    "latitude": 41.14961,
-                    "longitude": -8.61099
-                },
-                "viewport": {
-                    "northeast": {
-                        "latitude": 41.14961,
-                        "longitude": -8.61099
-                    },
-                    "southwest": {
-                        "latitude": 41.14961,
-                        "longitude": -8.61099
-                    }
-                }
-            }
-        Failure example:
-            {
-                "error": "Failed to retrieve coordinates. Status code: 400"
-            }
-    """
-    url = "https://maps.googleapis.com/maps/api/geocode/json"
-    components = []
-    if country:
-        components.append(f"country:{country}")
-    if locality:
-        components.append(f"locality:{locality}")
-    params = {
-        "address": address,
-        "components": "|".join(components),
-        "key": GOOGLE_MAPS_API_KEY,
-    }
-    response = requests.get(url, params=params)
-
-    if not response.status_code == 200:
-        return {
-            "error": f"Failed to retrieve coordinates. Status code: {response.status_code}"
-        }
-
-    response_json = response.json()
-    if not response_json["status"] == "OK":
-        return {"error": "Geocoding API error: " + response_json["status"]}
-
-    geometry = response_json.get("results")[0].get("geometry", {})
-    return {
-        "location": geometry.get("location"),
-        "viewport": geometry.get("viewport"),
-    }
-
-
-def search_hotels(
-    location: dict,
-    checkin_date: str,
-    checkout_date: str,
-    filters: str,
-) -> dict:
-    """
-    Searches for hotels in a specific location (latitude/longitude) for given dates and number of guests.
-
-    Uses the Booking.com Hotels API via RapidAPI.
-
-    Args:
-        location (dict): The location dictionary containing the 'viewport' attribute.
-        checkin_date (str): The check-in date in YYYY-MM-DD format.
-        checkout_date (str): The check-out date in YYYY-MM-DD format.
-        filters (str): Filters for the search. Values should be separated by commas. Available filters are:
-            - mealplan::breakfast_included for breakfast included
-            - free_cancellation::1 for free cancellation
-
-    Returns:
-        dict:
-            - On success: the JSON response from the API containing hotel search results.
-            - On failure: a dictionary with an error message.
-
-        Success example:
-            {
-                "data": {
-                    "results": [
-                        {
-                            "checkinCheckoutPolicy": {
-                                "checkinTimeFromInHours": 15,
-                                "checkinTimeUntilInHours": 0,
-                                "checkoutTimeUntilInHours": 11,
-                                "checkoutTimeFromInHours": 0
-                            },
-                            "basicPropertyData": {
-                                "name": "Hotel Example",
-                                "latitude": 41.14961,
-                                "longitude": -8.61099,
-                                "address": "123 Example St, Porto, Portugal",
-                                "starRating": {
-                                    "value": 4,
-                                    "symbol": "STARS"
-                                },
-                                "reviews": {
-                                    "reviewsCount": 5728,
-                                    "totalScore": 7.3
-                                }
-                            },
-                            "blocks": [
-                                {
-                                    "finalPrice": {
-                                        "amount": 150,
-                                        "currency": "USD"
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        Failure example:
-            {
-                "error": "Failed to retrieve hotel data. Status code: 400"
-            }
-    """
-    # TODO: API has pagination, so we are only getting the first page of results
-    # TODO: Additional parameters for more refined search (e.g., number of guests, min/max price)
-    # TODO: Return more information (e.g., checkin/out times)
-    import json
-    import os
-
-    # Prepare cache filename using input parameters
-    import re
-
-    def sanitize(val):
-        r"""
-        Cleans a string for safe use in filenames (Windows compatible).
-        - Replaces spaces with underscores
-        - Removes invalid filename characters (: / \ ? * < > | ")
-        Returns '_' if input is None or empty after cleaning.
-        """
-        if val is None:
-            return "_"
-        val = str(val)
-        val = val.replace(" ", "_")
-        val = re.sub(r"[:/\\?*<>|\"]", "", val)
-        return val or "_"
-
-    def short(val):
-        """
-        Converts a string/float to its integer part as a string.
-        Used to shorten latitude/longitude for cache filenames.
-        Falls back to sanitize if conversion fails.
-        """
-        try:
-            return str(int(float(val)))
-        except Exception:
-            return sanitize(val)
-
-    ne = location.get("viewport", {}).get("northeast", {})
-    sw = location.get("viewport", {}).get("southwest", {})
-    cache_filename = (
-        f"responses/hotels_"
-        f"lat-{short(ne.get('lat'))}_lng-{short(ne.get('lng'))}_"
-        f"lat-{short(sw.get('lat'))}_lng-{short(sw.get('lng'))}_"
-        f"{sanitize(checkin_date)}_{sanitize(checkout_date)}_"
-        f"{sanitize(filters) if filters else 'nofilters'}.json"
-    )
-    if os.path.exists(cache_filename):
-        with open(cache_filename, "r", encoding="utf-8") as f:
-            print("Loading cached hotel search data from file.")
-            return json.load(f)
-    print("Cached hotel search data not found. Making API request...")
-
-    url = "https://booking-com18.p.rapidapi.com/stays/search-by-geo"
-    headers = {
-        "x-rapidapi-key": RAPID_API_KEY,
-        "x-rapidapi-host": "booking-com18.p.rapidapi.com",
-    }
-    params = {
-        "neLat": ne.get("lat"),
-        "neLng": ne.get("lng"),
-        "swLat": sw.get("lat"),
-        "swLng": sw.get("lng"),
-        "checkinDate": checkin_date,
-        "checkoutDate": checkout_date,
-    }
-    if filters:
-        params["categoriesFilters"] = filters
-    
-    print(f"API request params: {params}")
-    print(f"API request filters: {filters}")
-
-    response = requests.get(url, headers=headers, params=params)
-    
-    print(f"API response status: {response.status_code}")
-    if response.status_code != 200:
-        print(f"API response text: {response.text}")
-
-    if response.status_code == 200:
-        response_data = response.json()
-        results_count = len(response_data.get("data", {}).get("results", []))
-        print(f"API returned {results_count} results")
-        
-        os.makedirs("responses", exist_ok=True)
-        with open(cache_filename, "w", encoding="utf-8") as f:
-            json.dump(response_data, f, indent=4)
-        return response_data
-    else:
-        return {
-            "error": f"Failed to retrieve hotel data. Status code: {response.status_code}"
-        }
-
-
-def calculate_road_distance_between_coordinates(
-    source_coords: list[float],
-    target_coords: list[list[float]],
-    mode: str = "walk",  # "walk" | "drive"
-) -> dict:
-    """
-    Calculates distance/time using Geoapify Route Matrix. No cache.
-    Returns {'data': [...], 'distance_units': 'meters'} or {'error': ...}
-    """
-    if not target_coords:
-        return {"data": [], "distance_units": "meters"}
-
-    # sanity check simples
-    if mode not in ("walk", "drive"):
-        mode = "walk"
-
-    url = "https://api.geoapify.com/v1/routematrix"
-    headers = {"Content-Type": "application/json"}
-    params = {"apiKey": GEOAPIFY_API_KEY}
-    data = {
-        "mode": mode,
-        "sources": [{"location": source_coords}],  # [lon, lat]
-        "targets": [
-            {"location": coord} for coord in target_coords
-        ],  # [[lon, lat], ...]
-    }
-    try:
-        resp = requests.post(url, headers=headers, params=params, json=data, timeout=30)
-    except Exception as e:
-        return {"error": f"Distance API request failed: {e}"}
-
-    if resp.status_code != 200:
-        return {
-            "error": f"Failed to retrieve distance data. Status code: {resp.status_code}"
-        }
-
-    try:
-        j = resp.json()
-        return {
-            "data": (j.get("sources_to_targets") or [])[0],
-            "distance_units": j.get("distance_units") or "meters",
-        }
-    except Exception as e:
-        return {"error": f"Error parsing distance response: {e}"}
 
 
 def enrich_hotels_with_distance(

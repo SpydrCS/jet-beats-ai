@@ -19,7 +19,7 @@ Any loyalty programs or airlines you prefer?
 """
 
 INPUT_PROMPT_1 = """
-Hi JetBeats! I need to plan a trip from Lisbon to our Paris office. I'd like to leave sometime between November 20 and 22 and come back between November 24 and 26. Ideally, I'd prefer morning flights when departing and evening flights for the return.
+Hi JetBeats! I need to plan a trip from Lisbon to our Paris office. I'd like to leave sometime between November 20 and 22, 2025 and come back between November 24 and 26, 2025. Ideally, I'd prefer morning flights when departing and evening flights for the return.
 For the hotel, I'm looking for something mid-range, with good Wi-Fi and breakfast included, and as close as possible to the office. At the destination, I'll mostly use the metro or walk, so please keep that in mind when choosing the hotel.
 Also, if possible, I'd like to fly with TAP Air Portugal and stay at a Marriott hotel if there's one nearby.
 """

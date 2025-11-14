@@ -36,6 +36,10 @@ def get_hotels_near_destination(
       2) Booking.com (RapidAPI) hotel search (cached on disk)
       3) Geoapify Route Matrix (distance/time enrichment; no cache)
 
+    IMPORTANT: If the geocoding fails for a specific address (like "Paris office" or "company office"), 
+    automatically retry with just the city name from the locality parameter (e.g., "Paris"). 
+    This ensures hotels can still be found even when the specific location name is too vague or unknown.
+
     Args:
         address (str): Destination address or POI (e.g., "Microsoft Parque das Nações, Lisboa").
         checkin_date (str): Check-in date in YYYY-MM-DD format.
@@ -89,6 +93,7 @@ def get_hotels_near_destination(
       - Hotel search is cached under `responses/` by bounding box and dates.
       - Distance matrix is not cached; time/distance fields may be None for unreachable targets.
       - Ranking prioritizes lowest travel time, then lowest total price.
+      - If geocoding fails for specific location, retry with just the city name for better results.
     """
     print("Hotel tool called with:", {
         "final_destination": final_destination,
