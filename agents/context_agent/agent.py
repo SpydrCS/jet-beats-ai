@@ -38,21 +38,3 @@ root_agent = LlmAgent(
     output_schema=StructuredTravelContext,
     output_key="structured_context_result",
 )
-
-
-if __name__ == "__main__":
-
-    import asyncio
-    from google.genai import types
-    import json
-    from utils.run import run_agent
-
-    app_name = "travel_context_app"
-    TEST_INPUT = {"prompt": INPUT_PROMPT_1}
-
-    user_content = types.Content(
-        role="user", parts=[types.Part(text=json.dumps(TEST_INPUT))]
-    )
-
-    asyncio.run(run_agent(app_name, root_agent, user_content))
-    name = ("travel_context_tool_agent",)

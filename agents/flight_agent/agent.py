@@ -37,19 +37,3 @@ root_agent = LlmAgent(
     output_schema=FlightToolResponse,
     output_key="structured_flight_result",
 )
-
-if __name__ == "__main__":
-    import asyncio
-    from google.genai import types
-    import json
-    from utils.run import run_agent
-    from agents.flight_agent.prompts import INPUT_PROMPT_1
-
-    app_name = "flight_information_app"
-
-    user_content = types.Content(
-        role="user", parts=[types.Part(text=json.dumps(INPUT_PROMPT_1))]
-    )
-
-    asyncio.run(run_agent(app_name, root_agent, user_content))
-    name = ("flight_information_tool_agent",)
