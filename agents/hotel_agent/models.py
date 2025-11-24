@@ -15,6 +15,32 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
 
 
+# Updated to match context agent/flight agent field names
+class HotelAgentInput(BaseModel):
+    final_destination: str = Field(
+        description="Address/POI, e.g., 'Microsoft Parque das Nações, Lisboa'."
+    )
+    country_code: Optional[str] = Field(
+        default=None, description="ISO-3166-1 alpha-2, e.g., 'PT'."
+    )
+    locality: Optional[str] = Field(
+        default=None, description="City/locality, e.g., 'Lisboa'."
+    )
+    departure_date: str = Field(description="YYYY-MM-DD")
+    return_date: str = Field(description="YYYY-MM-DD")
+    hotel_rating_preference: Optional[str] = Field(
+        default=None, description="Hotel rating preference, e.g., 'budget-friendly'."
+    )
+    hotel_extras_preference: Optional[list[str]] = Field(
+        default=None,
+        description="List of hotel extras, e.g., ['Wi-Fi', 'breakfast included'].",
+    )
+    include_breakfast: bool = Field(default=True)
+    free_cancellation: bool = Field(default=True)
+    transport_mode: Literal["walk", "drive"] = Field(default="walk")
+    top_k: int = Field(default=5, ge=1, le=20)
+
+
 class HotelItemOut(BaseModel):
     name: str
     latitude: float
