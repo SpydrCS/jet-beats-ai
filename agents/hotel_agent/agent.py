@@ -22,8 +22,14 @@ root_agent = LlmAgent(
     4) Rank by travel time (asc), then total price (asc).
     5) Return exactly the HotelSearchResultOut JSON. If a tool errors, return: {{"error": "<message>"}}.
 
-    Your output MUST be **exactly** in the following format (no extra text):
-    {HotelSearchResultOut.model_json_schema()}
+    **Guidelines:**
+    - In case of an error from the tool, respond with:
+        {{
+            "status": "error",
+            "message": "<error_message>"
+        }}
+    - Your output MUST be **exactly** in the following format (no extra text):
+        {HotelSearchResultOut.model_json_schema()}
     """,
     input_schema=HotelAgentInput,
     output_schema=HotelSearchResultOut,

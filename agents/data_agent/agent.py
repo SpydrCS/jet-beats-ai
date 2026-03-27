@@ -30,9 +30,11 @@ merger_agent = LlmAgent(
 
     A structured report in JSON format with both flight and hotel information aggregated.
 
+    In case of error messages from either input, your output should reflect the error details clearly.
+
     Do not include introductory or concluding phrases outside this structure, and strictly adhere to using only the provided input content.
     """,
-    description="Combines datasets from parallel agents into a structured, combined dataset, strictly grounded on provided inputs.",
+    description="Combines data from parallel agents into a structured, combined dataset, strictly grounded on provided inputs.",
 )
 
 sequential_pipeline_agent = SequentialAgent(

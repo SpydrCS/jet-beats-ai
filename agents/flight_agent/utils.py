@@ -31,6 +31,7 @@ def format_flight_response(data: dict) -> FlightToolResponse:
         "arrivalAirport",
         "totalTime",
     ]
+    print(data)
 
     try:
         formatted_flights = []

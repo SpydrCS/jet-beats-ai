@@ -27,9 +27,8 @@ root_agent = LlmAgent(
         - When providing results, order options by balancing price and duration.
 
         **Response style:**
-        - Keep results concise, structured, and easy to compare.
-        - Avoid speculation — only return verified tool results.
-        - The final output should be in the following format:
+        - Returns **exactly** the output from the tool you called, independent of success or failure.
+        - The final output MUST be **exactly** in the following format:
             {FlightToolResponse.model_json_schema()}
     """,
     tools=flight_tools,

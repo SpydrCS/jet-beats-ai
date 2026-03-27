@@ -2,7 +2,7 @@ import json
 import requests
 from dotenv import load_dotenv
 import os
-from .flight import format_flight_response
+from .utils import format_flight_response
 from .models import FlightToolResponse
 
 load_dotenv()
@@ -217,12 +217,12 @@ def search_roundtrip_flights(
     Notes:
     - Expects valid IATA codes and an ISO-formatted date.
     """
-    # check if file with api response already exists in responses/roundtrip_{origin}_{destination}_{depart_date}_{return_date}.json
+    # check if file with api response already exists
     file_path = f"../responses/roundtrip_{origin}_{destination}_{depart_date}_{return_date}.json"
     if os.path.exists(file_path):
         with open(file_path, "r") as f:
             print("Loading cached round-trip flight data from file.")
-            return json.load(f)
+            return format_flight_response(json.load(f))
 
     print("Cached round-trip flight data not found. Making API request...")
     # TODO: API has pagination, so we are only getting the first page of results
@@ -240,14 +240,16 @@ def search_roundtrip_flights(
         "returnDate": return_date,
     }
     response = requests.get(url, headers=headers, params=query_string)
-    if response.status_code == 200:
+    if response.status_code == 200 and response.json().get("data"):
         os.makedirs("../responses", exist_ok=True)
         with open(file_path, "w") as f:
             json.dump(response.json(), f, indent=4)
         return format_flight_response(response.json())
     else:
         try:
-            message = "Error response:", response.json()
+            message = "Error response:", json.loads(
+                response.json().get("errors", {}).get("content", "{}")
+            ).get("error", {}).get("code", "")
         except Exception:
             message = "Error response is not in JSON format."
         return FlightToolResponse(
